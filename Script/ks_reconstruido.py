@@ -13,15 +13,15 @@ from matplotlib import cm
 from IPython import get_ipython
 get_ipython().run_line_magic('matplotlib', 'qt5')
 #%%
-L = 50  # Longitud del dominio
-T = 0.36  # Tiempo total de simulación
-nx = 512  # Número de puntos de la cuadrícula
-nt = 1000  # Número de pasos de tiempo
+L = 22  # Longitud del dominio
+T = 100  # Tiempo total de simulación
+nx = 64  # Número de puntos de la cuadrícula
+nt = 10000  # Número de pasos de tiempo
 
 
 x, dx = np.linspace(0, L, nx, endpoint=False, retstep=True)
 t, dt = np.linspace(0, T, nt, endpoint=False, retstep=True)
-k = np.arange(-nx/2, nx/2, 1)
+k = np.fft.fftfreq(nx, dx)
 
 u = np.ones((nx, nt))
 u_hat = np.ones((nx, nt), dtype=complex)
@@ -37,16 +37,16 @@ for i, valor in enumerate(t[:-1]):
     #esta parte calcula el término no lineal
     fx = 1j*k*u_hat[:,i]
     ux   =  np.real(np.fft.irfft(fx))
-    fux = np.fft.rfft(ux**2)
+    fux = (1/nx) * np.fft.fftshift(np.fft.rfft(ux**2))
     
-    k1 = dt * (k**2 * u_hat[:, i] - k**4 * u_hat[:, i] - fux/2)
+    k1 = dt * ( (k**2 * u_hat[:, i]) - (k**4 * u_hat[:, i]) - fux/2)
     
     #calcula  el término no lineal evaluado en u_hat[:, i] + k1 / 2
     fx_2 = 1j*k*(u_hat[:, i] + k1 / 2)
     ux_2   =  np.real(np.fft.irfft(fx_2))
-    fux_2 = np.fft.rfft(ux_2**2)
+    fux_2 = (1/nx) * np.fft.fftshift(np.fft.rfft(ux_2**2))
         
-    k2 = dt * (k**2 * (u_hat[:, i] + k1 / 2) - k**4 * (u_hat[:, i] + k1 / 2) - fux_2/2)
+    k2 = dt * ( (k**2 * (u_hat[:, i] + k1 / 2)) - (k**4 * (u_hat[:, i] + k1 / 2)) - fux_2/2)
     u_hat[:, i + 1] = u_hat[:, i] + k2
 
     # Aplicar la transformada inversa de Fourier solo a la columna actual
