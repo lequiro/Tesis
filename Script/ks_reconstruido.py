@@ -1,63 +1,99 @@
 import numpy as np
-from scipy.fft import fft, ifft
-from tqdm import tqdm
+# from tqdm import tqdm
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from IPython import get_ipython
-get_ipython().run_line_magic('matplotlib', 'qt5')
+# from IPython import get_ipython
+# get_ipython().run_line_magic('matplotlib', 'qt5')
 
 #%%
 L = 22  # Longitud del dominio
-T = 100  # Tiempo total de simulación
+T = 1000  # Tiempo total de simulación
 nx = 64  # Número de puntos de la cuadrícula
-nt = 10000  # Número de pasos de tiempo
-
+dt = 1e-3
+nt = int(T/dt)  # Número de pasos de tiempo
 
 x, dx = np.linspace(0, L, nx, endpoint=False, retstep=True)
 t, dt = np.linspace(0, T, nt, endpoint=False, retstep=True)
-k = np.fft.fftfreq(nx, dx) * 2 * np.pi 
+k = 2*np.pi*np.fft.rfftfreq(nx, dx)
 
 u = np.ones((nx, nt))
-u_hat = np.ones((nx, nt), dtype=complex)
+u_hat = np.ones((nx//2 + 1, nt), dtype=complex)
 
-u0 = np.sin(x) + np.sin(2*x) + np.sin(3*x)  # Condición inicial
-u0_hat = np.fft.fftshift(np.fft.fft(u0))
+# Condicion inicial
+# Deben ser L-periodicas
+p  = 2*np.pi/L
+u0 = np.sin(p*x) + 0.5*np.sin(2*p*x) + 0.1*np.sin(3*p*x - L/3)
+# u0 = np.cos((2 * np.pi * x) / L) + 0.1 * np.cos((4 * np.pi * x) / L)
+u0_hat = np.fft.rfft(u0)
 
 u[:, 0] = u0
 u_hat[:, 0] = u0_hat
 
-for i, valor in enumerate(t[:-1]):
+# Parseval para DFT
+# Esto compara la energía total, no media.
+# El 2.0 en la parte de Fourier está para
+# compensar por lo numeros de onda con k<0
+# que no se usan en la rfft.
+real_space = np.sum(u0**2)
+
+uh = np.real(u0_hat*u0_hat.conjugate())
+uh[1:] = 2.0*uh[1:] 
+fourier_space = (1/nx)*np.sum(uh)
+print("Check Parseval", real_space, fourier_space)
+
+# Check derivatives
+ux = np.gradient(u0, dx)
+fx = np.fft.irfft(1.0j*k*u0_hat)
+plt.figure()
+plt.plot(x, ux, label='fin dif')
+plt.plot(x, fx, label='fourier')
+plt.legend()
+
+def first_deriv(uu, kk):
+    return 1.0j*kk*uu
+
+def second_deriv(uu, kk):
+    return -kk**2*uu
+
+def fourth_deriv(uu, kk):
+    return kk**4*uu
+
+ord = 2 # order of RK
+for i in range(1, nt):
     
-    #esta parte calcula el término no lineal
-    fx = u_hat[:,i]
-    ux   =  np.real(np.fft.ifft(fx))
-    fux = np.fft.fft(ux**2)
-    
-    k1 = dt * ( (k**2 * u_hat[:, i]) - (k**4 * u_hat[:, i]) - 0.5j*k*fux )
-    
-    #calcula  el término no lineal evaluado en u_hat[:, i] + k1 / 2
-    fx_2 = (u_hat[:, i] + k1 / 2)
-    ux_2   =  np.real(np.fft.ifft(fx_2))
-    fux_2 = np.fft.fft(ux_2**2)
+    u_prev = u_hat[:, i-1]
+    u_hat[:, i] = u_prev
+    for oo in range(ord, 0, -1):
+        # Non-linear term
+        fx = u_hat[:,i]
+        ux = np.fft.irfft(fx)
+        fux = np.fft.rfft(ux**2)
         
-    k2 = dt * ( (k**2 * (u_hat[:, i] + k1 / 2)) - (k**4 * (u_hat[:, i] + k1 / 2)) - 0.5j*k*fux_2 )
-    u_hat[:, i + 1] = u_hat[:, i] + k2
+        u_hat[:,i] = u_prev + (dt/oo) * (
+            - 0.5*first_deriv(fux, k)
+            - second_deriv(u_hat[:,i], k) 
+            - fourth_deriv(u_hat[:,i], k)
+            )
 
-    # k1 = dt * (Laplacian*u_hat - 0.5j*k*fft(np.real(ifft(u_hat))**2))
-    # k2 = dt * (Laplacian*(u_hat + 0.5*k1) - 0.5j*k*fft(np.real(ifft(u_hat + 0.5*k1))**2))
-    # k3 = dt * (Laplacian*(u_hat + 0.5*k2) - 0.5j*k*fft(np.real(ifft(u_hat + 0.5*k2))**2))
-    # k4 = dt * (Laplacian*(u_hat + k3) - 0.5j*k*fft(np.real(ifft(u_hat + k3))**2))
-    # u_hat = u_hat + alpha * (k1 + 2*k2 + 2*k3 + k4) / 6
+        # de-aliasing
+        u_hat[0, i] = 0.0
+        u_hat[nx//3:, i] = 0.0
 
-u = np.real(np.fft.ifft(np.fft.ifftshift(u_hat), axis=0))
+u = np.fft.irfft(u_hat, axis=0)
 
+plt.figure()
+plt.plot(u[:, -1])
 
 plt.figure(figsize=(10, 6))
 plt.imshow(u, extent=[0, T, 0, L], aspect='auto')
 plt.colorbar(label='u')
 plt.xlabel('Tiempo')
 plt.ylabel('Espacio')
-plt.show()
 
-#%%
-plt.plot(k,u0_hat)
+plt.figure()
+plt.loglog(k, np.abs(u0_hat)**2)
+
+plt.figure()
+plt.plot(t, np.mean(u, axis=0)**2)
+
+plt.show()
