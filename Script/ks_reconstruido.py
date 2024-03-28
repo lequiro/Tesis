@@ -7,7 +7,7 @@ from matplotlib import cm
 
 #%%
 L = 22  # Longitud del dominio
-T = 1000  # Tiempo total de simulación
+T = 100  # Tiempo total de simulación
 nx = 64  # Número de puntos de la cuadrícula
 dt = 1e-3
 nt = int(T/dt)  # Número de pasos de tiempo
@@ -22,8 +22,8 @@ u_hat = np.ones((nx//2 + 1, nt), dtype=complex)
 # Condicion inicial
 # Deben ser L-periodicas
 p  = 2*np.pi/L
-u0 = np.sin(p*x) + 0.5*np.sin(2*p*x) + 0.1*np.sin(3*p*x - L/3)
-# u0 = np.cos((2 * np.pi * x) / L) + 0.1 * np.cos((4 * np.pi * x) / L)
+# u0 = np.sin(p*x) + 0.5*np.sin(2*p*x) + 0.1*np.sin(3*p*x - L/3)
+u0 = np.cos((2 * np.pi * x) / L) + 0.1 * np.cos((4 * np.pi * x) / L)
 u0_hat = np.fft.rfft(u0)
 
 u[:, 0] = u0
@@ -91,9 +91,9 @@ plt.xlabel('Tiempo')
 plt.ylabel('Espacio')
 
 plt.figure()
-plt.loglog(k, np.abs(u0_hat)**2)
+plt.loglog(k, np.abs(u_hat[:,-1])**2)
 
 plt.figure()
-plt.plot(t, np.mean(u, axis=0)**2)
+plt.plot(t, np.mean(u**2, axis=0))
 
 plt.show()
