@@ -11,11 +11,9 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from IPython import get_ipython
-get_ipython().run_line_magic('matplotlib', 'qt5')
+get_ipython().run_line_magi"c('matplotlib', 'qt5')
 
-
-#%%
-
+"""
 L = 100  # Domain length
 T = 50  # Total simulation time
 nx = 256  # Number of grid points
@@ -42,11 +40,14 @@ u_hat[:,0] = u0_hat
 
 
 for i, valor in enumerate(t[:-1]):
-    k1 = dt * (k**2 * u_hat[:,i] - k**4 * u_hat[:,i] + (k**2)/2 * (u_hat[:,i] **2))
-    k2 = dt * (k**2 * (u_hat[:,i] + k1/2) - k**4 * (u_hat[:,i] + k1/2) + (k**2)/2 * ((u_hat[:,i] + k1/2) **2))
+    k1 = dt * (k**2 * u_hat[:,i] - k**4 * u_hat[:,i] + (k**2)/2 * np.fft.fft(np.real(np.fft.ifft(u_hat[:,i]))**2))
+    
+    k2 = dt * (k**2 * (u_hat[:,i] + k1/2) - k**4 * (u_hat[:,i] + k1/2) + (k**2)/2 * np.fft.fft(np.real(np.fft.ifft((u_hat[:,i] + k1/2)))**2))
     u_hat[:,i+1]= u_hat[:,i] + k2
     
     u[:,i+1] =  np.real(nx * np.fft.ifft(np.fft.ifftshift(u_hat[:,i+1])))
+"""
+
 
 #%%
 
@@ -68,8 +69,6 @@ u0_hat = (1 / nx) * np.fft.fftshift(np.fft.fft(u0))
 
 u[:, 0] = u0
 u_hat[:, 0] = u0_hat
-
-
 
 for i, valor in enumerate(t[:-1]):
     
@@ -100,5 +99,5 @@ plt.ylabel('Espacio')
 plt.show()
 
 #%%
-
+#%%
 plt.plot(k,u0_hat)
