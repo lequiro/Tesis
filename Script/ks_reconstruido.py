@@ -64,10 +64,17 @@ plt.ylabel('Densidad de energia $|u(k)|$')
 
 
 #%%
+
+
 np.random.seed(49)
 seleccion_x = np.sort(np.random.choice(nx, size=20, replace=False))
 for i in seleccion_x:
     plt.plot(t,u[i,:])
+    
+#%%
+#PARSEVAL
+
+
     
 
 
