@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-for which in [1, 2, 3]:
+for which in [1]:
 
     plt.figure(1)
     df = pd.read_csv(f'{which:02}/output.csv')
-    plt.semilogy(df['val_mean_squared_error'], label=which)
+    plt.semilogy(df['val_MeanSquaredError'], label=which)
 
     plt.figure(10)
     plt.semilogy(df['val_grad_loss'], label=which)
