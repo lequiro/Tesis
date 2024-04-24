@@ -2,6 +2,7 @@ import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from IPython import get_ipython
+import random
 get_ipython().run_line_magic('matplotlib', 'qt5')
 
 #%%
@@ -52,31 +53,60 @@ def solve_KS(initial_condition, spatial_resolution, time_steps, order=4):
     
     return u, u_hat
 
+
+def generar_funcion_periodica_aleatoria(num_terminos):
+    funcion = np.zeros_like(x)
+    for i in range(num_terminos):
+        frecuencia = np.random.randint(1, 3)  # Frecuencia aleatoria
+        amplitud = np.random.uniform(0.1, 0.95)  # Amplitud aleatoria
+        # fase = np.random.uniform(0, 2*np.pi)  # Fase aleatoria
+        funcion += amplitud * np.cos(frecuencia * p * x)
+    return funcion
+
 #%%
 L = 22 # Longitud del dominio
 T = 60  # Tiempo total de simulación
-nx = 64 # Número de puntos de la cuadrícula
+nx = 80 # Número de puntos de la cuadrícula
 dt = 1e-3
 nt = int(T/dt)  # Número de pasos de tiempo
 
 x, dx = np.linspace(0, L, nx, endpoint=False, retstep=True)
 t, dt = np.linspace(0, T, nt, endpoint=False, retstep=True)
 k = 2*np.pi*np.fft.rfftfreq(nx, dx) #te da las frecuencias en radianes dado un número de puntos y un espaciado
-
-
-
-#Condiciones Iniciales: deben ser L-periódicas
 p  = 2*np.pi/L
-# u0 = np.sin(p*x) + 0.5*np.sin(2*p*x) + 0.1*np.sin(3*p*x - L/3)
-u0 = np.cos(p* x) + 0.1 * np.cos(2*p* x)
 
 
-u, u_hat = solve_KS(u0, nx, nt)
+num_it = 10
+# Crear un tensor para almacenar las matrices u
+u_total = np.ones((nx, nt, num_it))
+u_hat_total = np.ones((nx//2 + 1, nt, num_it), dtype=complex)
 
-#corto el transitorio
-u = u[:,20_000:]
+
+for i in range(num_it):
+    # Generar una función periódica aleatoria
+    u0 = generar_funcion_periodica_aleatoria(random.randint(1, 3))
+    
+    # Resolver la ecuación de Kuramoto-Sivashinsky
+    u, u_hat = solve_KS(u0, nx, nt)
+    
+    # Almacenar el resultado en el tensor u_total
+    u_total[:, :, i] = u
+    u_hat_total[:,:,i] = u_hat
+
+# corto el transitorio
+u_total = u_total[:, 20_000:, :]
+u_hat_total = u_hat_total[:, 20_000:, :]
 #%%
-
+#la primera vez para ver cuales quitar
+u_hat_total_new = u_hat_total.copy()
+u_total_new = u_total.copy()
+#%%
+indices_to_delete = [0,5,6]
+u_total_new = np.delete(u_total, indices_to_delete, axis=2)
+u_hat_total_new = np.delete(u_hat_total, indices_to_delete, axis=2)
+#%%
+# u_total_new = np.load("u_total.npy")
+# u_hat_total_new = np.load("u_hat_total.npy")
 # Create subplots
 fig, axs = plt.subplots(2, 2, figsize=(12, 10))
 
@@ -85,31 +115,47 @@ axs[0, 0].imshow(u, extent=[20, T, 0, L], aspect='auto')
 axs[0, 0].set_title('u')
 axs[0, 0].set_xlabel('Tiempo')
 axs[0, 0].set_ylabel('Espacio')
-fig.colorbar(axs[0, 0].imshow(u, extent=[0, T, 0, L], aspect='auto'), ax=axs[0, 0])
+fig.colorbar(axs[0, 0].imshow(u_total_new[:,:,1], extent=[20, T, 0, L], aspect='auto'), ax=axs[0, 0])
 
 # Plot second graph
-axs[0, 1].loglog(k, np.abs(u_hat[:,-1]))
+for r in range(10 - len(indices_to_delete)):
+    axs[0, 1].loglog(k, np.abs(u_hat_total_new[:,-1,r]), label= f'{r}')
 axs[0, 1].set_xlabel('k')
 axs[0, 1].set_ylabel('Densidad de energía $|u(k)|$')
 axs[0, 1].set_title('Densidad de energía')
+axs[0, 1].legend()
 
 # Plot third graph
 seleccion_x = np.sort(np.random.choice(nx, size=20, replace=False))
 for i in seleccion_x:
-    axs[1, 0].plot(t[20_000:], u[i, :])
+    axs[1, 0].plot(t, u[i, :])
 axs[1, 0].set_xlabel('Tiempo')
 axs[1, 0].set_ylabel('Amplitud')
 axs[1, 0].set_title('20 selecciones aleatorias de u')
 
 # Plot fourth graph
-real_space = np.sum(np.square(u), axis=0)
-axs[1, 1].plot(t[20_000:], real_space)
+for r in range(10 - len(indices_to_delete)):
+    real_space = np.sum(np.square(u_total_new[:,:,r]), axis=0)
+    axs[1, 1].plot(t[20_000:], real_space)
 axs[1, 1].set_xlabel('Tiempo')
 axs[1, 1].set_ylabel('Energía total $\sum_{columnas} u^2$')
 axs[1, 1].set_title('Energía total')
 
 plt.tight_layout()
 plt.show()
+
+#%%
+import os
+'''
+Si todo anda bien guardo el tensor que tiene los datos
+'''
+mes = '04'
+path = rf'C:\Users\Luis Quispe\Desktop\Tesis\data_KS\{mes}_24'
+os.chdir(path)
+
+np.save("u_total_1.npy", u_total_new)
+np.save("u_hat_total_1.npy", u_hat_total_new)
+
 #%%
 plt.close('all')
 plt.loglog( k, np.abs(u_hat[:,2]), label= 't=2e-3')
