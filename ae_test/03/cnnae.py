@@ -1,4 +1,5 @@
 import numpy as np
+import time
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -9,9 +10,9 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import CSVLogger
 from IPython import get_ipython
-corrida=1
-dh=32
-path = rf'C:\Users\Luis Quispe\Desktop\Tesis\data_KS\Datasets\dh_{dh}\{corrida}\variables'
+corrida=3
+dh=128
+path = rf'C:\Users\Luis Quispe\Desktop\Tesis\data_KS\Convolutional'
 os.chdir(path)
 get_ipython().run_line_magic('matplotlib', 'qt5')
 #%%
@@ -29,10 +30,11 @@ def grad_loss(y_true, y_pred):
     loss_deriv = tf.keras.losses.mse(dy_true, dy_pred)
     return loss_deriv
 #%%
+lr= 4
 N= (u_train.T).shape[1]
-num_batch_size = 128
+num_batch_size = 1024
 num_epochs = 500
-num_valid_split = 0.3
+num_valid_split = 0.25
 x_data = u_train.T[::10,:]
 x_valid = u_test.T[::10,:]
 
@@ -41,8 +43,8 @@ input_shape = (N,1)
 
 # Encoder
 inputs = Input(shape=input_shape)
-x = Conv1D(16, 3, activation='relu', padding='same')(inputs)
-x = Conv1D(8, 3, activation='relu', padding='same')(x)
+x = Conv1D(32, 3, activation='relu', padding='same')(inputs)
+x = Conv1D(16, 3, activation='relu', padding='same')(x)
 x = Conv1D(8, 3, activation='relu', padding='same')(x)
 x = Reshape((8*N,))(x)
 encoded = Dense(dh)(x)
@@ -51,8 +53,8 @@ encoded = Dense(dh)(x)
 x = Dense(8*N, activation='relu')(encoded)
 x = Reshape((N, 8))(x)
 x = Conv1D(8, 3, activation='relu', padding='same')(x)
-x = Conv1D(8, 3, activation='relu', padding='same')(x)
 x = Conv1D(16, 3, activation='relu', padding='same')(x)
+x = Conv1D(32, 3, activation='relu', padding='same')(x)
 decoded = Conv1D(1, 3, padding='same')(x)
 
 # Autoencoder model
@@ -63,9 +65,10 @@ autoencoder.compile(optimizer=optimizer,
                     metrics=['MeanSquaredError', grad_loss])
 
 # Callback
-csv_logger = CSVLogger(f'..\output_cnnae_{num_batch_size}_{num_epochs}.csv', append=True)
+csv_logger = CSVLogger(f'prueba{corrida}\output_cnnae_{dh}_{num_batch_size}_{num_epochs}_{lr}.csv', append=True)
 
 # Train
+start_time = time.time()
 
 history = autoencoder.fit(x_data, x_data,
                           epochs=num_epochs,
@@ -74,13 +77,15 @@ history = autoencoder.fit(x_data, x_data,
                           callbacks=[csv_logger],
                           verbose=0)
 
-
+end_time = time.time()
+training_time = (end_time - start_time)/60
+print(f"Training time: {training_time} minutes")
 # Save output
 preds = autoencoder(x_valid).numpy()[:,:,0]
 #%%
-df_cnnae = pd.read_csv(f'..\output_cnnae_{num_batch_size}_{num_epochs}.csv')
+df_cnnae = pd.read_csv(f'prueba{corrida}\output_cnnae_{dh}_{num_batch_size}_{num_epochs}_{lr}.csv')
 #%%%
-num = 10_000
+num = 25_000
 
 plt.figure(figsize=(10, 6))
 plt.plot(preds.T[:, num], label='predicción', linewidth=2)
@@ -93,7 +98,7 @@ plt.legend(fontsize=12)
 plt.xticks(fontsize=12)
 plt.yticks(fontsize=12)
 
-plt.savefig(f'..\cnnae_{num}.png', dpi=300, bbox_inches='tight')
+# plt.savefig(f'prueba{corrida}\cnnae_{num}.png', dpi=300, bbox_inches='tight')
 plt.show()
 #%%
 #LOSS FUNCTION

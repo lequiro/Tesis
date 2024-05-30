@@ -2,9 +2,9 @@ import numpy as np
 from tqdm import tqdm
 import os
 #directorio donde guardo los datasets
-corrida=1
-dh=10
-path = rf'C:\Users\Luis Quispe\Desktop\Tesis\data_KS\Datasets\dh_{dh}\{corrida}'
+corrida=2
+dh=32
+path = rf'C:\Users\Luis Quispe\Desktop\Tesis\data_KS\Datasets\dh_{dh}\{corrida}\variables'
 os.chdir(path)
 
 #%%
@@ -68,8 +68,8 @@ def generar_funcion_periodica_aleatoria(num_terminos):
 #%%
 L = 22 # Longitud del dominio
 T = 400 # Tiempo total de simulación
-nx = 64 # Número de puntos de la cuadrícula
-dt = 1e-3
+nx = 128 # Número de puntos de la cuadrícula
+dt = 1e-4
 nt = int(T/dt)  # Número de pasos de tiempo
 corte_transitorio = 40_000
 

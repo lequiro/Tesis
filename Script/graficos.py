@@ -5,7 +5,7 @@ import os
 from scipy.fft import rfft
 
 corrida=1
-dh=10
+dh=32
 path = rf'C:\Users\Luis Quispe\Desktop\Tesis\data_KS\Datasets\dh_{dh}\{corrida}\variables'
 os.chdir(path)
 get_ipython().run_line_magic('matplotlib', 'qt5')
