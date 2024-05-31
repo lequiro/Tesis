@@ -4,9 +4,7 @@ from IPython import get_ipython
 import os
 from scipy.fft import rfft
 
-corrida=1
-dh=32
-path = rf'C:\Users\Luis Quispe\Desktop\Tesis\data_KS\Datasets\dh_{dh}\{corrida}\variables'
+path = rf'C:\Users\Luis Quispe\Desktop\Tesis\data_KS\nuevo_dataset'
 os.chdir(path)
 get_ipython().run_line_magic('matplotlib', 'qt5')
 #%%
@@ -48,14 +46,14 @@ axs[0, 1].set_title('Densidad de energía')
 # Plot third graph
 seleccion_x = np.sort(np.random.choice(nx, size=10, replace=False))
 for i in seleccion_x:
-    axs[1, 0].plot(t, u[i, :])
+    axs[1, 0].plot(u[i, :])
 axs[1, 0].set_xlabel('Tiempo')
 axs[1, 0].set_ylabel('Amplitud')
 axs[1, 0].set_title('20 selecciones aleatorias de u')
 
 # Plot fourth graph
 real_space = np.sum(np.square(u), axis=0)
-axs[1, 1].plot(t, real_space)
+axs[1, 1].plot(real_space)
 axs[1, 1].set_xlabel('Tiempo')
 axs[1, 1].set_ylabel('Energía total $\sum_{columnas} u^2$')
 axs[1, 1].set_title('Energía total')
