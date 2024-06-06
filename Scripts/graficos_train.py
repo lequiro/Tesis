@@ -11,10 +11,8 @@ del path
 del dataset
 #%%
 #cargo los archivos train data_sets
-u_train = np.load('u_train.npy')
-u_hat_train = np.load('u_hat_train.npy')
-u_test = np.load('u_test.npy')
-u_hat_test = np.load('u_hat_test.npy')
+u = np.load('u_train.npy')
+u_hat = np.load('u_hat_train.npy')
 
 data = np.load('data.npz')
 L = data['L']
@@ -22,9 +20,7 @@ T = data['T']
 t = data['t']
 nx = data['nx']
 k = data['k']
-#%%
-u= u_test.copy()
-u_hat = u_hat_test.copy()
+
 #%%
 # Create subplots
 fig, axs = plt.subplots(2, 2, figsize=(12, 10))
@@ -58,22 +54,4 @@ axs[1, 1].set_ylabel('Energía total $\sum_{columnas} u^2$')
 axs[1, 1].set_title('Energía total')
 
 plt.tight_layout()
-plt.show()
-#%%
-
-plt.loglog(k, np.abs(u_hat[:, 2]), 'b', label='Valid t=2e-3')
-plt.loglog(k, np.abs(u_hat[:, 1000]), 'b', label='Valid t=1')
-plt.loglog(k, np.abs(u_hat[:, 2000]), 'b', label='Valid t=2')
-
-# Plot predictions (in red)
-plt.loglog(k, np.abs(u_hat_preds[:, 2]), 'r--', label='Preds t=2e-3')
-plt.loglog(k, np.abs(u_hat_preds[:, 1000]), 'r--', label='Preds t=1')
-plt.loglog(k, np.abs(u_hat_preds[:, 2000]), 'r--', label='Preds t=2')
-
-plt.xlabel('k', fontsize=14)
-plt.ylabel('Magnitude', fontsize=14)
-plt.title('Valid Data vs Predictions', fontsize=16)
-plt.legend()
-plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-
 plt.show()

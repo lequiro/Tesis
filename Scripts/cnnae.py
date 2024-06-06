@@ -1,20 +1,20 @@
-import numpy as np
 import time
 import pandas as pd
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import os
-from tensorflow.keras.layers import Input, Dense, Conv1D, MaxPooling1D, UpSampling1D, Reshape
+from tensorflow.keras.layers import Input, Dense, Conv1D, Reshape
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import CSVLogger
 from IPython import get_ipython
-corrida=3
-dh=64
-path = rf'C:\Users\Luis Quispe\Desktop\Tesis\data_KS\Convolutional'
+dataset = 3
+path = rf'C:\Users\Luis Quispe\Desktop\Tesis\data_KS\Convolutional_dataset{dataset}'
 os.chdir(path)
 get_ipython().run_line_magic('matplotlib', 'qt5')
+del path
+del dataset
 #%%
 u_train = np.load('u_train.npy')
 u_hat_train = np.load('u_hat_train.npy')
