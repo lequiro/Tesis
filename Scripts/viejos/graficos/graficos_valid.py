@@ -1,6 +1,7 @@
+from IPython import get_ipython
 import numpy as np
 import matplotlib.pyplot as plt
-from IPython import get_ipython
+import pandas as pd
 import os
 dataset = 3
 path = rf'C:\Users\Luis Quispe\Desktop\Tesis\data_KS\Convolutional_dataset{dataset}'
@@ -9,13 +10,44 @@ get_ipython().run_line_magic('matplotlib', 'qt5')
 del path
 del dataset
 #%%
+prueba = 1
+v = 3
+df_cnnae = pd.read_csv(f'prueba{prueba}/v{v}.csv')
+
+
+
+#LOSS FUNCTION
+plt.figure(figsize=(10, 6))
+plt.plot(df_cnnae['MeanSquaredError'], label='MSE_TRAIN', linewidth=2)
+plt.plot(df_cnnae['val_MeanSquaredError'], label='MSE_VALID', linewidth=2)
+plt.title('Training and Validation Mean Squared Error CNNAE', fontsize=16)
+plt.xlabel('Epoch', fontsize=14)
+plt.ylabel('Mean Squared Error', fontsize=14)
+plt.legend(fontsize=12)
+plt.xticks(fontsize=12)
+plt.yticks(fontsize=12)
+
+plt.savefig('..\mse_plot_cnnae.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+
+plt.figure(figsize=(10, 6))
+plt.semilogy(df_cnnae['epoch'], df_cnnae['val_MeanSquaredError'])
+plt.xlabel('Epoch', fontsize=14)
+plt.ylabel('Validation MSE', fontsize=14)
+plt.title('Validation MSE over Epochs', fontsize=18)
+plt.xticks(fontsize=12)
+# desired_yticks = [10**-2, 10**-1, 10**-0.5]
+# plt.yticks(desired_yticks, fontsize=12)
+plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+plt.show()
+#%%
 #cargo los archivos train data_sets
 u_test = np.load('u_test.npy')
 u_hat_test = np.load('u_hat_test.npy')
 
 u_preds = np.load('u_test.npy')
 u_hat_preds = np.load('u_hat_test.npy')
-
 
 data = np.load('data.npz')
 L = data['L']

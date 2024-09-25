@@ -1,8 +1,6 @@
 import time
-import pandas as pd
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
 import os
 from tensorflow.keras.layers import Input, Dense, Conv1D, Reshape
 from tensorflow.keras.models import Model
@@ -67,8 +65,8 @@ def build_model(u,encoder_layers,decoder_layers,dh,lr):
                         metrics=['MeanSquaredError', grad_loss])
     return autoencoder
 
-def train_model(u, model, num_epochs, num_batch_size, num_valid_split, prueba = 1):
-    csv_logger = CSVLogger(f'prueba{prueba}\{num_epochs}_{num_batch_size}_{num_valid_split}_layers_{len(lista_neuronas_encoder)}.csv', append=False)
+def train_model(u, model, num_epochs, num_batch_size, num_valid_split, prueba = 1, v_num=4):
+    csv_logger = CSVLogger(f'prueba{prueba}/v{v_num}.csv', append=False)
     start_time = time.time()
     history = model.fit(u.T, u.T,
               epochs=num_epochs,
@@ -83,25 +81,25 @@ def train_model(u, model, num_epochs, num_batch_size, num_valid_split, prueba = 
 dh= 64
 lr=1e-4
 lista_neuronas_encoder = [128,64,32,16,8]
-kernel_size = 5
+kernel_size = 3
 config_encoder, config_decoder = neural_configuration(lista_neuronas_encoder, kernel_size)
 
-modelo1= build_model(u_train, config_encoder, config_decoder, dh, lr)
-modelo_entrenado1 = train_model(u_train, modelo1, num_epochs=500, num_batch_size=1024, num_valid_split=0.25)
+modelo1= build_model(u_train.T[::10,:], config_encoder, config_decoder, dh, lr)
+modelo_entrenado1 = train_model(u_train.T[::10,:], modelo1, num_epochs= 500, num_batch_size=1024, num_valid_split=0.30)
 #%%
-'''
-# Save the weights
-weights_file_path = 'autoencoder_weights.h5'
-autoencoder.save_weights(weights_file_path)
+preds = modelo1(u_test.T[::10,:]).numpy()
+#%%
+prueba= 1
+modelo1.save(f'prueba{prueba}/modelo1.h5')
+modelo_cargado = tf.keras.models.load_model(f'prueba{prueba}/modelo1.h5', custom_objects={'grad_loss': grad_loss})
 
-# Later, to load the weights into a new model instance
-new_autoencoder = build_model(N, dh, encoder_layers, decoder_layers, input_shape)
-new_autoencoder.load_weights(weights_file_path)
+u_preds = modelo_cargado.predict(u_test)
+#%%
+modelo_cargado = build_model(u_test, config_encoder, config_decoder, dh, lr)
+modelo_cargado.load_weights(f'prueba{prueba}/v2.weights.h5')
 
-# Verify by printing summaries
-autoencoder.summary()
-new_autoencoder.summary()
-'''
-
-
-
+u_preds = modelo_cargado(u_test.T).numpy()
+#%%
+u_pred = modelo_cargado(u_test.T[3000:3001,:]).numpy()[0,:,0]
+plt.plot(u_pred)
+plt.plot(u_test.T[3000,:])
