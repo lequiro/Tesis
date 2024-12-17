@@ -176,4 +176,19 @@ plt.tight_layout()
 plt.show()
 
 
+plt.figure(figsize=(14, 8))
+
+plt.plot(og_evolution[:, -1], label="Solve_KS evolution", linestyle='-', color='blue', linewidth=2)
+plt.plot(u_final[idx, :], label="NODE_evolution", linestyle='--', color='orange', linewidth=2)
+
+plt.title("Comparación de Evolución temporal", fontsize=24)
+plt.xlabel("x", fontsize=14)
+plt.ylabel(r"$u(x,\tau)$", fontsize=14)
+plt.legend(fontsize=12)
+plt.grid(alpha=0.5)
+
+
+plt.tight_layout()
+plt.show()
+
 
