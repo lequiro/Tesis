@@ -3,10 +3,12 @@ import matplotlib.pyplot as plt
 from IPython import get_ipython
 import os
 from scipy.fft import rfft
-dataset = 1
+get_ipython().run_line_magic('matplotlib', 'qt5')
+#%%
+dataset = 10
 path = rf'C:\Users\Luis Quispe\Desktop\Tesis\sakura_runs\data_KS\Convolutional_dataset{dataset}'
 os.chdir(path)
-get_ipython().run_line_magic('matplotlib', 'qt5')
+
 del path
 del dataset
 #%%
@@ -22,6 +24,9 @@ nx = data['nx']
 k = data['k']
 
 #%%
+u = u_train.copy()
+u_hat = u_hat_train.copy()
+
 # Create subplots
 plt.close('all')
 fig, axs = plt.subplots(2, 2, figsize=(12, 10))
